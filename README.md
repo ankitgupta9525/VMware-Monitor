@@ -18,11 +18,16 @@ Works with Claude Code, Cursor, Codex, Gemini CLI, Trae, and 30+ AI agents:
 npx skills add zw008/VMware-Monitor
 ```
 
-### Claude Code
+### Claude Code Plugin Install
 
 ```bash
+# Add marketplace
 /plugin marketplace add zw008/VMware-Monitor
+
+# Install plugin
 /plugin install vmware-monitor
+
+# Use the skill
 /vmware-monitor:vmware-monitor
 ```
 
@@ -130,21 +135,41 @@ For these operations, use the full [VMware-AIops](https://github.com/zw008/VMwar
 
 | Platform | Status | Config File | AI Model |
 |----------|--------|-------------|----------|
-| **Claude Code** | ✅ Native Skill | `skill/SKILL.md` | Anthropic Claude |
-| **Gemini CLI** | ✅ AGENTS.md | `codex-skill/AGENTS.md` | Google Gemini |
-| **OpenAI Codex CLI** | ✅ AGENTS.md | `codex-skill/AGENTS.md` | OpenAI GPT |
+| **Claude Code** | ✅ Native Skill | `skills/vmware-monitor/SKILL.md` | Anthropic Claude |
+| **Gemini CLI** | ✅ Extension | `gemini-extension/GEMINI.md` | Google Gemini |
+| **OpenAI Codex CLI** | ✅ Skill + AGENTS.md | `codex-skill/AGENTS.md` | OpenAI GPT |
 | **Aider** | ✅ Conventions | `codex-skill/AGENTS.md` | Any (cloud + local) |
 | **Continue CLI** | ✅ Rules | `codex-skill/AGENTS.md` | Any (cloud + local) |
-| **Trae IDE** | ✅ Rules | `codex-skill/AGENTS.md` | Claude/DeepSeek/GPT-4o |
-| **Kimi Code CLI** | ✅ Skill | `codex-skill/AGENTS.md` | Moonshot Kimi |
+| **Trae IDE** | ✅ Rules | `trae-rules/project_rules.md` | Claude/DeepSeek/GPT-4o |
+| **Kimi Code CLI** | ✅ Skill | `kimi-skill/SKILL.md` | Moonshot Kimi |
 | **MCP Server** | ✅ MCP Protocol | `mcp_server/` | Any MCP client |
 | **Python CLI** | ✅ Standalone | N/A | N/A |
+
+### Platform Comparison
+
+| Feature | Claude Code | Gemini CLI | Codex CLI | Aider | Continue | Trae IDE | Kimi CLI |
+|---------|-------------|------------|-----------|-------|----------|----------|----------|
+| Cloud AI | Anthropic | Google | OpenAI | Any | Any | Multi | Moonshot |
+| Local models | — | — | — | Ollama | Ollama | — | — |
+| Skill system | SKILL.md | Extension | SKILL.md | — | Rules | Rules | SKILL.md |
+| MCP support | Native | Native | Via Skills | Third-party | Native | — | — |
+| Free tier | — | 60 req/min | — | Self-hosted | Self-hosted | — | — |
 
 ---
 
 ## Installation
 
-### Step 1: Clone & Install
+### Step 0: Prerequisites
+
+```bash
+# Python 3.10+ required
+python3 --version
+
+# Node.js 18+ required for Gemini CLI and Codex CLI
+node --version
+```
+
+### Step 1: Clone & Install Python Backend
 
 ```bash
 git clone https://github.com/zw008/VMware-Monitor.git
@@ -176,40 +201,201 @@ Password environment variable naming convention:
 VMWARE_{TARGET_NAME_UPPER}_PASSWORD
 # Replace hyphens with underscores, UPPERCASE
 # Example: target "home-esxi" → VMWARE_HOME_ESXI_PASSWORD
+# Example: target "prod-vcenter" → VMWARE_PROD_VCENTER_PASSWORD
 ```
 
 ### Step 3: Connect Your AI Tool
 
-#### Claude Code (Recommended)
+Choose one (or more) of the following:
 
-```bash
+---
+
+#### Option A: Claude Code (Marketplace)
+
+**Method 1: Marketplace (recommended)**
+
+In Claude Code, run:
+```
 /plugin marketplace add zw008/VMware-Monitor
 /plugin install vmware-monitor
+```
+
+Then use:
+```
+/vmware-monitor:vmware-monitor
+> Show me all VMs on esxi-lab.example.com
+```
+
+**Method 2: Local install**
+
+```bash
+# Clone and symlink
+git clone https://github.com/zw008/VMware-Monitor.git
+ln -sf $(pwd)/VMware-Monitor ~/.claude/plugins/marketplaces/vmware-monitor
+
+# Register marketplace
+python3 -c "
+import json, pathlib
+f = pathlib.Path.home() / '.claude/plugins/known_marketplaces.json'
+d = json.loads(f.read_text()) if f.exists() else {}
+d['vmware-monitor'] = {
+    'source': {'source': 'github', 'repo': 'zw008/VMware-Monitor'},
+    'installLocation': str(pathlib.Path.home() / '.claude/plugins/marketplaces/vmware-monitor')
+}
+f.write_text(json.dumps(d, indent=2))
+"
+
+# Enable plugin
+python3 -c "
+import json, pathlib
+f = pathlib.Path.home() / '.claude/settings.json'
+d = json.loads(f.read_text()) if f.exists() else {}
+d.setdefault('enabledPlugins', {})['vmware-monitor@vmware-monitor'] = True
+f.write_text(json.dumps(d, indent=2))
+"
+```
+
+Restart Claude Code, then:
+```
 /vmware-monitor:vmware-monitor
 ```
 
-#### Codex / Aider / Continue / Trae / Kimi
+---
+
+#### Option B: Gemini CLI
 
 ```bash
-# Copy AGENTS.md to your project
-cp codex-skill/AGENTS.md ./AGENTS.md
+# Install Gemini CLI
+npm install -g @google/gemini-cli
 
-# Aider
+# Install the extension from the cloned repo
+gemini extensions install ./gemini-extension
+
+# Or install directly from GitHub
+# gemini extensions install https://github.com/zw008/VMware-Monitor
+```
+
+Then start Gemini CLI:
+```
+gemini
+> Show me all VMs on my ESXi host
+```
+
+---
+
+#### Option C: OpenAI Codex CLI
+
+```bash
+# Install Codex CLI
+npm i -g @openai/codex
+# Or on macOS:
+# brew install --cask codex
+
+# Copy skill to Codex skills directory
+mkdir -p ~/.codex/skills/vmware-monitor
+cp codex-skill/SKILL.md ~/.codex/skills/vmware-monitor/SKILL.md
+
+# Copy AGENTS.md to project root
+cp codex-skill/AGENTS.md ./AGENTS.md
+```
+
+Then start Codex CLI:
+```bash
+codex --enable skills
+> List all VMs on my ESXi
+```
+
+---
+
+#### Option D: Aider (supports local models)
+
+```bash
+# Install Aider
+pip install aider-chat
+
+# Install Ollama for local models (optional)
+# macOS:
+brew install ollama
+ollama pull qwen2.5-coder:32b
+
+# Run with cloud API
 aider --conventions codex-skill/AGENTS.md
 
-# Local model
-aider --conventions codex-skill/AGENTS.md --model ollama/qwen2.5-coder:32b
+# Or with local model via Ollama
+aider --conventions codex-skill/AGENTS.md \
+  --model ollama/qwen2.5-coder:32b
 ```
 
-#### MCP Server
+---
+
+#### Option E: Continue CLI (supports local models)
 
 ```bash
-python -m mcp_server
-# Or: vmware-monitor-mcp
-# Or: VMWARE_MONITOR_CONFIG=/path/to/config.yaml python -m mcp_server
+# Install Continue CLI
+npm i -g @continuedev/cli
+
+# Copy rules file
+mkdir -p .continue/rules
+cp codex-skill/AGENTS.md .continue/rules/vmware-monitor.md
 ```
 
-**Claude Desktop** (`claude_desktop_config.json`):
+Configure `~/.continue/config.yaml` for local model:
+```yaml
+models:
+  - name: local-coder
+    provider: ollama
+    model: qwen2.5-coder:32b
+```
+
+Then:
+```bash
+cn
+> Check ESXi health and alarms
+```
+
+---
+
+#### Option F: Trae IDE
+
+Copy the rules file to your project's `.trae/rules/` directory:
+
+```bash
+mkdir -p .trae/rules
+cp trae-rules/project_rules.md .trae/rules/project_rules.md
+```
+
+Trae IDE's Builder Mode reads `.trae/rules/` Markdown files at startup.
+
+> **Note**: You can also install Claude Code extension in Trae IDE and use `.claude/skills/` format directly.
+
+---
+
+#### Option G: Kimi Code CLI
+
+```bash
+# Copy skill file to Kimi skills directory
+mkdir -p ~/.kimi/skills/vmware-monitor
+cp kimi-skill/SKILL.md ~/.kimi/skills/vmware-monitor/SKILL.md
+```
+
+---
+
+#### Option H: MCP Server (Smithery / Glama / Claude Desktop)
+
+The MCP server exposes VMware read-only monitoring as tools via the [Model Context Protocol](https://modelcontextprotocol.io). Works with any MCP-compatible client (Claude Desktop, Cursor, etc.).
+
+```bash
+# Run directly
+python -m mcp_server
+
+# Or via the installed entry point
+vmware-monitor-mcp
+
+# With a custom config path
+VMWARE_MONITOR_CONFIG=/path/to/config.yaml python -m mcp_server
+```
+
+**Claude Desktop config** (`claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
@@ -224,17 +410,57 @@ python -m mcp_server
 }
 ```
 
-**Smithery**:
+**Install via Smithery**:
 ```bash
 npx -y @smithery/cli install @zw008/VMware-Monitor --client claude
 ```
 
-#### Standalone CLI (no AI)
+---
+
+#### Option I: Standalone CLI (no AI)
 
 ```bash
+# Already installed in Step 1
 source .venv/bin/activate
+
 vmware-monitor inventory vms --target home-esxi
 vmware-monitor health alarms --target home-esxi
+vmware-monitor vm info my-vm --target home-esxi
+```
+
+---
+
+## Chinese Cloud Models
+
+For users in China who prefer domestic cloud APIs or have limited access to overseas services.
+
+### DeepSeek
+
+```bash
+export DEEPSEEK_API_KEY="your-key"
+aider --conventions codex-skill/AGENTS.md \
+  --model deepseek/deepseek-coder
+```
+
+### Qwen (Alibaba Cloud)
+
+```bash
+export DASHSCOPE_API_KEY="your-key"
+aider --conventions codex-skill/AGENTS.md \
+  --model qwen/qwen-coder-plus
+```
+
+### Local Models (Aider + Ollama)
+
+For fully offline operation — no cloud API, no internet, full privacy.
+
+```bash
+brew install ollama
+ollama pull qwen2.5-coder:32b
+ollama serve
+
+aider --conventions codex-skill/AGENTS.md \
+  --model ollama/qwen2.5-coder:32b
 ```
 
 ---
@@ -288,6 +514,18 @@ See `config.example.yaml` for all options.
 
 ```
 VMware-Monitor/
+├── .claude-plugin/                # Claude Code marketplace manifest
+│   └── marketplace.json
+├── plugins/                       # Claude Code plugin
+│   └── vmware-monitor/
+│       ├── .claude-plugin/
+│       │   └── plugin.json
+│       └── skills/
+│           └── vmware-monitor/
+│               └── SKILL.md       # Read-only monitoring skill
+├── skills/                        # Skills index (npx skills add)
+│   └── vmware-monitor/
+│       └── SKILL.md
 ├── vmware_monitor/                # Python backend (read-only only)
 │   ├── config.py                  # YAML + .env config
 │   ├── connection.py              # Multi-target pyVmomi
@@ -298,23 +536,37 @@ VMware-Monitor/
 │   │   └── vm_info.py             # VM info, snapshot list (read-only)
 │   ├── scanner/                   # Log scanning daemon
 │   └── notify/                    # Notifications (JSONL + webhook)
+├── gemini-extension/              # Gemini CLI extension
+│   ├── gemini-extension.json
+│   └── GEMINI.md
+├── codex-skill/                   # Codex + Aider + Continue
+│   ├── SKILL.md
+│   └── AGENTS.md
+├── trae-rules/                    # Trae IDE rules
+│   └── project_rules.md
+├── kimi-skill/                    # Kimi Code CLI skill
+│   └── SKILL.md
 ├── mcp_server/                    # MCP server (read-only tools only)
 │   └── server.py
-├── skill/SKILL.md                 # Claude Code skill
-├── skills/vmware-monitor/         # Skills.sh index
-├── plugins/vmware-monitor/        # Claude Code plugin
-├── .claude-plugin/                # Marketplace manifest
-├── codex-skill/AGENTS.md          # Codex / Aider / Continue
+├── .agents/skills/                # Agent orchestration
+│   └── vmware-monitor/
+│       └── AGENTS.md
+├── smithery.yaml                  # Smithery marketplace config
+├── RELEASE_NOTES.md
 ├── config.example.yaml
 └── pyproject.toml
 ```
 
 ## Related Projects
 
-| Repository | Description |
-|------------|-------------|
-| [VMware-Monitor](https://github.com/zw008/VMware-Monitor) (this repo) | Read-only monitoring — code-level safety |
-| [VMware-AIops](https://github.com/zw008/VMware-AIops) | Full operations — monitoring + VM lifecycle |
+| Repository | Description | Install |
+|------------|-------------|---------|
+| **[VMware-Monitor](https://github.com/zw008/VMware-Monitor)** (this repo) | Read-only monitoring — code-level safety | `npx skills add zw008/VMware-Monitor` |
+| **[VMware-AIops](https://github.com/zw008/VMware-AIops)** | Full operations — monitoring + VM lifecycle | `npx skills add zw008/VMware-AIops` |
+
+> **Choosing between them**: Use **VMware-Monitor** if you only need read-only monitoring with zero risk of accidental changes. Use **VMware-AIops** if you need full operations (create, delete, power, snapshot, clone, migrate).
+
+---
 
 ## Troubleshooting & Contributing
 

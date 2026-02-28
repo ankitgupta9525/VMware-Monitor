@@ -117,13 +117,13 @@ ESXi 独立主机 ──→ VM
 
 | 平台 | 状态 | 配置文件 | AI 模型 |
 |------|------|---------|---------|
-| **Claude Code** | ✅ 原生技能 | `skill/SKILL.md` | Anthropic Claude |
-| **Gemini CLI** | ✅ AGENTS.md | `codex-skill/AGENTS.md` | Google Gemini |
-| **Codex CLI** | ✅ AGENTS.md | `codex-skill/AGENTS.md` | OpenAI GPT |
+| **Claude Code** | ✅ 原生技能 | `skills/vmware-monitor/SKILL.md` | Anthropic Claude |
+| **Gemini CLI** | ✅ Extension | `gemini-extension/GEMINI.md` | Google Gemini |
+| **Codex CLI** | ✅ Skill + AGENTS.md | `codex-skill/AGENTS.md` | OpenAI GPT |
 | **Aider** | ✅ 约定文件 | `codex-skill/AGENTS.md` | 任意（云端 + 本地） |
 | **Continue CLI** | ✅ 规则文件 | `codex-skill/AGENTS.md` | 任意（云端 + 本地） |
-| **Trae IDE** | ✅ Rules | `codex-skill/AGENTS.md` | Claude/DeepSeek/GPT-4o |
-| **Kimi Code CLI** | ✅ Skill | `codex-skill/AGENTS.md` | Moonshot Kimi |
+| **Trae IDE** | ✅ Rules | `trae-rules/project_rules.md` | Claude/DeepSeek/GPT-4o |
+| **Kimi Code CLI** | ✅ Skill | `kimi-skill/SKILL.md` | Moonshot Kimi |
 | **MCP Server** | ✅ MCP 协议 | `mcp_server/` | 任意 MCP 客户端 |
 | **Python CLI** | ✅ 独立运行 | N/A | N/A |
 
@@ -233,10 +233,12 @@ VMware-Monitor/
 │   ├── scanner/                   # 日志扫描守护进程
 │   └── notify/                    # 通知（JSONL + Webhook）
 ├── mcp_server/                    # MCP 服务器（仅只读工具）
-├── skill/SKILL.md                 # Claude Code 技能
 ├── skills/vmware-monitor/         # Skills.sh 索引
 ├── plugins/vmware-monitor/        # Claude Code 插件
-├── codex-skill/AGENTS.md          # Codex / Aider / Continue
+├── gemini-extension/              # Gemini CLI 扩展
+├── codex-skill/                   # Codex / Aider / Continue
+├── trae-rules/                    # Trae IDE 规则
+├── kimi-skill/                    # Kimi Code CLI 技能
 ├── config.example.yaml
 └── pyproject.toml
 ```
