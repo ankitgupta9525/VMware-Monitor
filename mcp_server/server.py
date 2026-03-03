@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     "vmware-monitor",
-    description=(
+    instructions=(
         "VMware vCenter/ESXi read-only monitoring. "
         "Query inventory, check health/alarms, and view VM info. "
         "No destructive operations — code-level enforced."
