@@ -201,7 +201,7 @@ chmod 600 ~/.vmware-monitor/.env
 # Edit and fill in your passwords
 ```
 
-> **Security note**: Prefer `.env` file over command-line `export` to avoid passwords appearing in shell history.
+> **Security note**: Prefer `.env` file over command-line `export` to avoid passwords appearing in shell history. `config.yaml` stores only hostnames, ports, and a reference to the `.env` file — it does **not** contain passwords or tokens. All secrets are stored exclusively in `.env` (`chmod 600`). Webhook notifications are disabled by default; when enabled, payloads contain no credentials, IPs, or PII — only aggregated alert metadata sent to user-configured URLs only. We recommend using a least-privilege read-only vCenter service account.
 
 Password environment variable naming convention:
 ```
