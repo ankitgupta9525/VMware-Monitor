@@ -1,13 +1,21 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.zw008/vmware-monitor",
-  "description": "Read-only VMware vCenter/ESXi monitoring. 8 MCP tools for VM inventory, host status, datastore capacity, cluster info, alarms, events, and VM details. Code-level enforced safety - no destructive operations exist.",
+  "title": "VMware Monitor",
+  "description": "Read-only VMware vCenter/ESXi monitoring with 8 MCP tools. Code-level safety.",
+  "repository": {
+    "url": "https://github.com/zw008/VMware-Monitor",
+    "source": "github"
+  },
   "version": "0.1.2",
   "packages": [
     {
-      "registry_type": "pypi",
+      "registryType": "pypi",
       "identifier": "vmware-monitor",
-      "version": "0.1.2"
+      "version": "0.1.2",
+      "transport": {
+        "type": "stdio"
+      }
     }
   ]
 }
