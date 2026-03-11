@@ -181,15 +181,15 @@ For these operations, use the full [VMware-AIops](https://github.com/zw008/VMwar
 
 The vmware-monitor MCP server works with **any MCP-compatible agent or tool**. Ready-to-use configuration templates are in [`examples/mcp-configs/`](examples/mcp-configs/). All 8 tools are **read-only** — code-level enforced safety.
 
-| Agent / Tool | Local Model Support | Config Template |
-|-------------|:-------------------:|-----------------|
-| **[Goose](https://github.com/block/goose)** | ✅ Ollama, LM Studio | [`goose.json`](examples/mcp-configs/goose.json) |
-| **[LocalCowork](https://github.com/Liquid4All/localcowork)** | ✅ Fully offline | [`localcowork.json`](examples/mcp-configs/localcowork.json) |
-| **[mcp-agent](https://github.com/lastmile-ai/mcp-agent)** | ✅ Ollama, vLLM | [`mcp-agent.yaml`](examples/mcp-configs/mcp-agent.yaml) |
-| **VS Code Copilot** | — | [`.vscode/mcp.json`](examples/mcp-configs/vscode-copilot.json) |
-| **Cursor** | — | [`cursor.json`](examples/mcp-configs/cursor.json) |
-| **Continue** | ✅ Ollama | [`continue.yaml`](examples/mcp-configs/continue.yaml) |
-| **Claude Code** | — | [`claude-code.json`](examples/mcp-configs/claude-code.json) |
+| Agent / Tool | Local Model Support | Config Template | Integration Guide |
+|-------------|:-------------------:|-----------------|-------------------|
+| **[Goose](https://github.com/block/goose)** | ✅ Ollama, LM Studio | [`goose.json`](examples/mcp-configs/goose.json) | [Guide](docs/integrations/goose.md) |
+| **[LocalCowork](https://github.com/Liquid4All/localcowork)** | ✅ Fully offline | [`localcowork.json`](examples/mcp-configs/localcowork.json) | [Guide](docs/integrations/localcowork.md) |
+| **[mcp-agent](https://github.com/lastmile-ai/mcp-agent)** | ✅ Ollama, vLLM | [`mcp-agent.yaml`](examples/mcp-configs/mcp-agent.yaml) | [Guide](docs/integrations/mcp-agent.md) |
+| **VS Code Copilot** | — | [`vscode-copilot.json`](examples/mcp-configs/vscode-copilot.json) | [Guide](docs/integrations/vscode-copilot.md) |
+| **Cursor** | — | [`cursor.json`](examples/mcp-configs/cursor.json) | — |
+| **Continue** | ✅ Ollama | [`continue.yaml`](examples/mcp-configs/continue.yaml) | [Guide](docs/integrations/continue.md) |
+| **Claude Code** | — | [`claude-code.json`](examples/mcp-configs/claude-code.json) | — |
 
 **Fully local operation** (no cloud API required):
 
